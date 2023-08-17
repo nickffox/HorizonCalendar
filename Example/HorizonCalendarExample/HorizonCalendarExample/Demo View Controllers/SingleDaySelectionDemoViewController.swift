@@ -28,7 +28,7 @@ final class SingleDaySelectionDemoViewController: BaseDemoViewController {
   required init?(coder: NSCoder) {
     fatalError("init(coder:) has not been implemented")
   }
-  
+
   // MARK: Internal
 
   override func viewDidLoad() {
@@ -36,10 +36,13 @@ final class SingleDaySelectionDemoViewController: BaseDemoViewController {
 
     title = "Single Day Selection"
 
+    addButton()
+
     calendarView.daySelectionHandler = { [weak self] day in
       guard let self else { return }
 
       self.selectedDate = self.calendar.date(from: day.components)
+
       self.calendarView.setContent(self.makeContent())
     }
   }
@@ -54,7 +57,7 @@ final class SingleDaySelectionDemoViewController: BaseDemoViewController {
       calendar: calendar,
       visibleDateRange: startDate...endDate,
       monthsLayout: monthsLayout)
-
+      .dayAspectRatio(isTall ? 2 : 1.3)
       .interMonthSpacing(24)
       .verticalDayMargin(8)
       .horizontalDayMargin(8)
@@ -63,6 +66,8 @@ final class SingleDaySelectionDemoViewController: BaseDemoViewController {
         var invariantViewProperties = DayView.InvariantViewProperties.baseInteractive
 
         let date = calendar.date(from: day.components)
+        invariantViewProperties.backgroundShapeDrawingConfig.borderWidth = 1
+        invariantViewProperties.backgroundShapeDrawingConfig.borderColor = .gray
         if date == selectedDate {
           invariantViewProperties.backgroundShapeDrawingConfig.borderColor = .blue
           invariantViewProperties.backgroundShapeDrawingConfig.fillColor = .blue.withAlphaComponent(0.15)
@@ -80,5 +85,33 @@ final class SingleDaySelectionDemoViewController: BaseDemoViewController {
   // MARK: Private
 
   private var selectedDate: Date?
+  private var isTall: Bool = false
+
+  private lazy var button: UIButton = {
+    let button = UIButton()
+    button.translatesAutoresizingMaskIntoConstraints = false
+    button.backgroundColor = .green
+    button.setTitle("Change Height", for: .normal)
+    button.addTarget(self, action: #selector(tappedButton), for: .touchUpInside)
+    return button
+  }()
+
+  @objc
+  private func tappedButton() {
+    isTall = !isTall
+
+    let content = makeContent()
+    calendarView.setContent(content)
+
+    UIView.animate(withDuration: 0.5) { [weak self] in self?.calendarView.layoutIfNeeded() }
+  }
+
+  private func addButton() {
+    view.addSubview(button)
+    NSLayoutConstraint.activate([
+      button.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -60),
+      button.centerXAnchor.constraint(equalTo: view.centerXAnchor),
+    ])
+  }
 
 }
