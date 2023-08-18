@@ -59,18 +59,29 @@ final class SingleDaySelectionDemoViewController: BaseDemoViewController {
       monthsLayout: monthsLayout)
       .dayAspectRatio(isTall ? 2 : 1.3)
       .interMonthSpacing(24)
-      .verticalDayMargin(8)
-      .horizontalDayMargin(8)
-
-      .dayItemProvider { [calendar, dayDateFormatter] day in
+      .verticalDayMargin(2)
+      .horizontalDayMargin(2)
+      .monthBackgroundItemProvider { monthLayoutContext in
+        MonthGridBackgroundView.calendarItemModel(
+          invariantViewProperties: .init(
+            color: .green,
+            horizontalDayMargin: 2,
+            verticalDayMargin: 2),
+          content: .init(framesOfDays: monthLayoutContext.daysAndFrames.map { $0.frame }))
+      }
+      .dayItemProvider { [weak self, calendar, dayDateFormatter] day in
         var invariantViewProperties = DayView.InvariantViewProperties.baseInteractive
 
         let date = calendar.date(from: day.components)
+        invariantViewProperties.shape = .rectangle()
         invariantViewProperties.backgroundShapeDrawingConfig.borderWidth = 1
-        invariantViewProperties.backgroundShapeDrawingConfig.borderColor = .gray
         if date == selectedDate {
           invariantViewProperties.backgroundShapeDrawingConfig.borderColor = .blue
           invariantViewProperties.backgroundShapeDrawingConfig.fillColor = .blue.withAlphaComponent(0.15)
+        }
+
+        if self?.isTall ?? false {
+          invariantViewProperties.edgeInsets.bottom = 40
         }
 
         return DayView.calendarItemModel(
@@ -90,8 +101,8 @@ final class SingleDaySelectionDemoViewController: BaseDemoViewController {
   private lazy var button: UIButton = {
     let button = UIButton()
     button.translatesAutoresizingMaskIntoConstraints = false
-    button.backgroundColor = .green
     button.setTitle("Change Height", for: .normal)
+    button.configuration = .filled()
     button.addTarget(self, action: #selector(tappedButton), for: .touchUpInside)
     return button
   }()
@@ -100,10 +111,13 @@ final class SingleDaySelectionDemoViewController: BaseDemoViewController {
   private func tappedButton() {
     isTall = !isTall
 
-    let content = makeContent()
-    calendarView.setContent(content)
-
-    UIView.animate(withDuration: 0.5) { [weak self] in self?.calendarView.layoutIfNeeded() }
+    //{ [weak self] in self?.calendarView.layoutIfNeeded() }
+    UIView.animate(withDuration: 0.5) { [weak self] in
+      guard let self else { return }
+      let content = makeContent()
+      calendarView.setContent(content)
+      calendarView.layoutIfNeeded()
+    }
   }
 
   private func addButton() {
